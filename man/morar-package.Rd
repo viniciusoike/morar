@@ -6,6 +6,8 @@
 \alias{morar-package}
 \title{morar: Housing Affordability Analysis for Brazil}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 Mortgage and housing affordability calculations following Brazilian market conventions. Implements SAC, Price and mixed amortization, effective and nominal rates, insurance (MIP and DFI) and administrative fees, the inversion between income and maximum financeable price, full amortization schedules, and affordability indices (HAI and price-to-income ratio). Core functions are vectorized so they apply to entire income or price distributions.
 }
 \seealso{

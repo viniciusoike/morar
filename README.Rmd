@@ -1,0 +1,103 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+options(pillar.width = 80)
+```
+
+# morar <img src="man/figures/logo.png" align="right" height="139" alt="" />
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/viniciusoike/morar/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/viniciusoike/morar/actions/workflows/R-CMD-check.yaml)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+<!-- badges: end -->
+
+morar computes housing affordability under Brazilian mortgage rules. It
+answers two questions: how much income a household needs to buy a given
+property, and how expensive a property a given income can buy. It handles
+SAC, Price and mixed amortization, effective and nominal rates, insurance
+(MIP and DFI) and administrative fees. Every core function is vectorized, so
+it works on whole income or price distributions inside `dplyr::mutate()`.
+
+## Installation
+
+```r
+# install.packages("pak")
+pak::pak("viniciusoike/morar")
+```
+
+## Income and price
+
+`min_income()` returns the monthly income needed to finance a property, and
+`max_price()` inverts it. By default the first payment may take 30% of
+income, and the loan-to-value ratio follows Caixa's SBPE limits for the
+chosen method.
+
+```{r}
+library(morar)
+
+# Income needed for a R$ 500k property at 11% a.a., SAC, 80% LTV
+min_income(500000, i = 0.11)
+
+# Most expensive property each income can finance
+max_price(c(5000, 10000, 20000), i = 0.11)
+```
+
+Banks approve credit against the first payment *including* insurance and
+fees. MIP depends on the borrower's age, so the charges default to zero;
+pass your own rates to include them.
+
+```{r}
+min_income(
+  500000,
+  i = 0.11,
+  mip_rate = 0.0003,
+  dfi_rate = 0.00008,
+  admin_fee = 25
+)
+```
+
+`loan_summary()` returns every component at once:
+
+```{r}
+loan_summary(c(300000, 500000, 800000), i = 0.11, method = "price")
+```
+
+## Amortization schedules
+
+`amortization_table()` builds the month-by-month schedule for one loan.
+
+```{r}
+amortization_table(500000, i = 0.11, n = 420, admin_fee = 25)
+```
+
+## Affordability indices
+
+The Housing Affordability Index (HAI) compares a household's income with the
+qualifying income: 100 means it qualifies exactly. The price-to-income ratio
+(PIR) divides the price by annual income and maps to the Demographia
+categories.
+
+```{r}
+calc_hai(price = 400000, income = 8000, i = c(0.08, 0.11, 0.14))
+
+pir <- calc_pir(price = 500000, income = 10000, annual_factor = 40 / 3)
+pir
+pir_category(pir)
+```
+
+## Conventions
+
+- Rates are decimals: `0.11` means 11% a.a. Use the all-in rate; for loans
+  indexed to TR, add the expected TR to the contract spread.
+- `rate_type = "effective"` (default) compounds the annual rate;
+  `"nominal"` divides it by 12.
+- Affordability is evaluated at the first payment, the highest one under SAC.
+- `ltv = NULL` uses `default_ltv(method)`: 80% for SAC, 70% for Price and
+  mixed.
+- `calc_pir()` annualizes income with `annual_factor = 12`; use `40 / 3` to
+  include the 13th salary and the vacation bonus.
