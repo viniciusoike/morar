@@ -1,0 +1,35 @@
+# RStudio files
+.Rproj.user/
+*.Rproj
+.DS_Store
+
+# R specific
+.Rhistory
+.RData
+.Ruserdata
+
+# Package specific
+inst/doc
+/doc/
+/Meta/
+..Rcheck/
+
+# Device output from printing palettes during tests/examples
+Rplots.pdf
+
+# pkgdown local build (deployed via CI) and scratch output
+docs/
+logs/
+
+# System files
+*~
+*.swp
+*.swo
+Thumbs.db
+
+# Editor files
+.vscode/
+.positai
+
+AGENTS.md
+CLAUDE.md
