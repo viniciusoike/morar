@@ -25,16 +25,18 @@ annual_to_monthly <- function(i, rate_type = c("effective", "nominal")) {
 # All checks are vectorized: they fail if *any* element is invalid and report
 # the offending positions. NAs pass through and propagate to the output.
 
-check_rate <- function(i, arg = rlang::caller_arg(i),
-                       call = rlang::caller_env()) {
+check_rate <- function(
+  i,
+  arg = rlang::caller_arg(i),
+  call = rlang::caller_env()
+) {
   check_numeric(i, arg = arg, call = call)
-  bad <- which(!is.na(i) & (i < 0 | i >= 1))
+  bad <- which(!is.na(i) & i < 0)
   if (length(bad) > 0) {
     cli::cli_abort(
       c(
-        "{.arg {arg}} must be an annual rate in decimal form, in [0, 1).",
-        "x" = "Invalid value(s) at position(s) {bad}: {.val {i[bad]}}.",
-        "i" = "Use {.code 0.10} for 10% a.a., not {.code 10}."
+        "{.arg {arg}} must be a non-negative annual rate in decimal form.",
+        "x" = "Invalid value(s) at position(s) {bad}: {.val {i[bad]}}."
       ),
       call = call
     )
@@ -42,8 +44,11 @@ check_rate <- function(i, arg = rlang::caller_arg(i),
   invisible(i)
 }
 
-check_unit_interval <- function(x, arg = rlang::caller_arg(x),
-                                call = rlang::caller_env()) {
+check_unit_interval <- function(
+  x,
+  arg = rlang::caller_arg(x),
+  call = rlang::caller_env()
+) {
   check_numeric(x, arg = arg, call = call)
   bad <- which(!is.na(x) & (x <= 0 | x > 1))
   if (length(bad) > 0) {
@@ -58,8 +63,11 @@ check_unit_interval <- function(x, arg = rlang::caller_arg(x),
   invisible(x)
 }
 
-check_positive <- function(x, arg = rlang::caller_arg(x),
-                           call = rlang::caller_env()) {
+check_positive <- function(
+  x,
+  arg = rlang::caller_arg(x),
+  call = rlang::caller_env()
+) {
   check_numeric(x, arg = arg, call = call)
   bad <- which(!is.na(x) & x <= 0)
   if (length(bad) > 0) {
@@ -74,10 +82,32 @@ check_positive <- function(x, arg = rlang::caller_arg(x),
   invisible(x)
 }
 
-check_term <- function(n, arg = rlang::caller_arg(n),
-                       call = rlang::caller_env()) {
+check_non_negative <- function(
+  x,
+  arg = rlang::caller_arg(x),
+  call = rlang::caller_env()
+) {
+  check_numeric(x, arg = arg, call = call)
+  bad <- which(!is.na(x) & x < 0)
+  if (length(bad) > 0) {
+    cli::cli_abort(
+      c(
+        "{.arg {arg}} must be zero or positive.",
+        "x" = "Invalid value(s) at position(s) {bad}: {.val {x[bad]}}."
+      ),
+      call = call
+    )
+  }
+  invisible(x)
+}
+
+check_term <- function(
+  n,
+  arg = rlang::caller_arg(n),
+  call = rlang::caller_env()
+) {
   check_numeric(n, arg = arg, call = call)
-  bad <- which(!is.na(n) & (n < 1 | n != round(n)))
+  bad <- which(!is.na(n) & (!is.finite(n) | n < 1 | n != round(n)))
   if (length(bad) > 0) {
     cli::cli_abort(
       c(
@@ -90,8 +120,9 @@ check_term <- function(n, arg = rlang::caller_arg(n),
   invisible(n)
 }
 
+# A bare `NA` is logical; accept it so missing values propagate.
 check_numeric <- function(x, arg, call) {
-  if (!is.numeric(x)) {
+  if (!is.numeric(x) && !(is.logical(x) && all(is.na(x)))) {
     cli::cli_abort(
       "{.arg {arg}} must be numeric, not {.obj_type_friendly {x}}.",
       call = call

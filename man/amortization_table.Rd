@@ -5,45 +5,61 @@
 \title{Full amortization schedule}
 \usage{
 amortization_table(
-  p,
+  price,
   i,
-  ltv = 0.7,
+  ltv = NULL,
   n = 360,
-  method = c("sac", "price", "misto"),
-  rate_type = c("effective", "nominal")
+  method = c("sac", "price", "mixed"),
+  rate_type = c("effective", "nominal"),
+  mip_rate = 0,
+  dfi_rate = 0,
+  admin_fee = 0
 )
 }
 \arguments{
-\item{p}{Property price (scalar).}
+\item{price}{Property price (scalar).}
 
-\item{i}{Annual interest rate in decimal form (e.g. \code{0.10}).}
+\item{i}{Annual interest rate in decimal form (e.g. \code{0.10}). Use the
+all-in rate: for SFH loans indexed to TR, add the expected TR to the
+contract spread.}
 
-\item{ltv}{Loan-to-value ratio, in (0, 1]. Default \code{0.7} (30\% down payment).}
+\item{ltv}{Loan-to-value ratio, in (0, 1]. \code{NULL} (default) uses
+\code{\link[=default_ltv]{default_ltv()}} for the chosen \code{method}.}
 
 \item{n}{Loan term in months. Default \code{360} (30 years).}
 
 \item{method}{Amortization method: \code{"sac"} (constant amortization, default),
-\code{"price"} (constant payment) or \code{"misto"} (average of SAC and Price
-payments).}
+\code{"price"} (constant payment) or \code{"mixed"} (average of SAC and Price
+payments, the \emph{Sistema de Amortização Misto}).}
 
 \item{rate_type}{How \code{i} is quoted: \code{"effective"} (default) or \code{"nominal"}.
 See \code{\link[=annual_to_monthly]{annual_to_monthly()}}.}
+
+\item{mip_rate}{Monthly death and disability insurance (MIP) rate, applied
+to the outstanding loan balance. Default \code{0}.}
+
+\item{dfi_rate}{Monthly property damage insurance (DFI) rate, applied to
+the property price. Default \code{0}.}
+
+\item{admin_fee}{Monthly administrative fee in reais. Default \code{0}.}
 }
 \value{
 A tibble of class \code{morar_schedule} with one row per month and
-columns \code{periodo}, \code{saldo_inicial}, \code{juros}, \code{amortizacao}, \code{parcela} and
-\code{saldo_final}. Loan parameters are stored as attributes.
+columns \code{period}, \code{balance_start}, \code{interest}, \code{principal}, \code{payment}
+(interest plus principal), \code{charges} (MIP, DFI and the administrative
+fee), \code{total_payment} and \code{balance_end}. Loan parameters are stored in
+the \code{loan} attribute.
 }
 \description{
 Month-by-month schedule for a single loan under SAC, Price or mixed
-amortization. Replaces the old \code{loan()} function.
+amortization, including insurance and fees.
 }
 \examples{
 sched <- amortization_table(500000, i = 0.10)
 sched
 
 # Compare methods
-sac <- amortization_table(500000, i = 0.10, method = "sac")
-price <- amortization_table(500000, i = 0.10, method = "price")
-sum(sac$juros) - sum(price$juros)
+sac <- amortization_table(500000, i = 0.10, ltv = 0.7, method = "sac")
+price <- amortization_table(500000, i = 0.10, ltv = 0.7, method = "price")
+sum(price$interest) - sum(sac$interest)
 }

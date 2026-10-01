@@ -1,87 +1,108 @@
 #' Full amortization schedule
 #'
 #' Month-by-month schedule for a single loan under SAC, Price or mixed
-#' amortization. Replaces the old `loan()` function.
+#' amortization, including insurance and fees.
 #'
-#' @param p Property price (scalar).
+#' @param price Property price (scalar).
 #' @inheritParams loan-args
 #'
 #' @return A tibble of class `morar_schedule` with one row per month and
-#'   columns `periodo`, `saldo_inicial`, `juros`, `amortizacao`, `parcela` and
-#'   `saldo_final`. Loan parameters are stored as attributes.
+#'   columns `period`, `balance_start`, `interest`, `principal`, `payment`
+#'   (interest plus principal), `charges` (MIP, DFI and the administrative
+#'   fee), `total_payment` and `balance_end`. Loan parameters are stored in
+#'   the `loan` attribute.
 #' @export
 #' @examples
 #' sched <- amortization_table(500000, i = 0.10)
 #' sched
 #'
 #' # Compare methods
-#' sac <- amortization_table(500000, i = 0.10, method = "sac")
-#' price <- amortization_table(500000, i = 0.10, method = "price")
-#' sum(sac$juros) - sum(price$juros)
-amortization_table <- function(p, i, ltv = 0.7, n = 360,
-                               method = c("sac", "price", "misto"),
-                               rate_type = c("effective", "nominal")) {
+#' sac <- amortization_table(500000, i = 0.10, ltv = 0.7, method = "sac")
+#' price <- amortization_table(500000, i = 0.10, ltv = 0.7, method = "price")
+#' sum(price$interest) - sum(sac$interest)
+amortization_table <- function(
+  price,
+  i,
+  ltv = NULL,
+  n = 360,
+  method = c("sac", "price", "mixed"),
+  rate_type = c("effective", "nominal"),
+  mip_rate = 0,
+  dfi_rate = 0,
+  admin_fee = 0
+) {
   method <- rlang::arg_match(method)
   rate_type <- rlang::arg_match(rate_type)
-  for (arg in list(p, i, ltv, n)) {
-    if (length(arg) != 1) {
-      cli::cli_abort(
-        c(
-          "{.fn amortization_table} builds one schedule at a time.",
-          "i" = "{.arg p}, {.arg i}, {.arg ltv} and {.arg n} must be scalars.",
-          ">" = "Use {.fn loan_summary} for many loans at once."
-        )
+  ltv <- ltv %||% default_ltv(method)
+  scalars <- list(price, i, ltv, n, mip_rate, dfi_rate, admin_fee)
+  if (any(lengths(scalars) != 1)) {
+    cli::cli_abort(
+      c(
+        "{.fn amortization_table} builds one schedule at a time.",
+        "i" = "All numeric arguments must be scalars.",
+        ">" = "Use {.fn loan_summary} for many loans at once."
       )
-    }
+    )
   }
-  check_positive(p)
+  check_positive(price)
   check_unit_interval(ltv)
   check_term(n)
+  check_non_negative(mip_rate)
+  check_non_negative(dfi_rate)
+  check_non_negative(admin_fee)
 
   r <- annual_to_monthly(i, rate_type)
-  d0 <- p * ltv
+  d0 <- price * ltv
   t <- seq_len(n)
 
-  # Closed forms: no loops needed.
   # SAC: balance falls linearly.
-  saldo_sac <- d0 * (1 - (t - 1) / n)
-  parcela_sac <- d0 / n + r * saldo_sac
+  balance_sac <- d0 * (1 - (t - 1) / n)
+  payment_sac <- d0 / n + r * balance_sac
 
   # Price: constant payment.
-  pmt_price <- d0 * payment_factor(r, n, "price")
-  parcela_price <- rep(pmt_price, n)
+  payment_price <- rep(d0 * payment_factor(r, n, "price"), n)
 
-  parcela <- switch(method,
-    sac = parcela_sac,
-    price = parcela_price,
-    misto = (parcela_sac + parcela_price) / 2
+  payment <- switch(
+    method,
+    sac = payment_sac,
+    price = payment_price,
+    mixed = (payment_sac + payment_price) / 2
   )
 
-  # Balance recursion is linear in the payment stream, so a single
-  # cumulative pass works for every method (including misto).
-  saldo_inicial <- numeric(n)
-  saldo <- d0
+  # The balance recursion is linear in the payment stream, so one pass works
+  # for every method, including mixed.
+  balance_start <- numeric(n)
+  balance <- d0
   for (k in t) {
-    saldo_inicial[k] <- saldo
-    saldo <- saldo * (1 + r) - parcela[k]
+    balance_start[k] <- balance
+    balance <- balance * (1 + r) - payment[k]
   }
-  juros <- r * saldo_inicial
-  amortizacao <- parcela - juros
-  saldo_final <- saldo_inicial - amortizacao
+  interest <- r * balance_start
+  principal <- payment - interest
+  balance_end <- balance_start - principal
   # Clean floating-point residue on the last balance
-  saldo_final[abs(saldo_final) < 1e-6 * d0] <- 0
+  balance_end[abs(balance_end) < 1e-6 * d0] <- 0
+  charges <- mip_rate * balance_start + dfi_rate * price + admin_fee
 
   out <- tibble::tibble(
-    periodo = t,
-    saldo_inicial = saldo_inicial,
-    juros = juros,
-    amortizacao = amortizacao,
-    parcela = parcela,
-    saldo_final = saldo_final
+    period = t,
+    balance_start = balance_start,
+    interest = interest,
+    principal = principal,
+    payment = payment,
+    charges = charges,
+    total_payment = payment + charges,
+    balance_end = balance_end
   )
   attr(out, "loan") <- list(
-    preco = p, financiamento = d0, i = i, taxa_mensal = r,
-    n = n, ltv = ltv, method = method, rate_type = rate_type
+    price = price,
+    loan = d0,
+    i = i,
+    rate_monthly = r,
+    n = n,
+    ltv = ltv,
+    method = method,
+    rate_type = rate_type
   )
   class(out) <- c("morar_schedule", class(out))
   out
@@ -90,17 +111,24 @@ amortization_table <- function(p, i, ltv = 0.7, n = 360,
 #' @export
 print.morar_schedule <- function(x, ...) {
   info <- attr(x, "loan")
-  fmt <- function(v) format(round(v, 2), big.mark = ".", decimal.mark = ",",
-                            nsmall = 2, scientific = FALSE)
+  fmt <- function(v) {
+    format(
+      round(v, 2),
+      big.mark = ".",
+      decimal.mark = ",",
+      nsmall = 2,
+      scientific = FALSE
+    )
+  }
   cli::cli_text(
     "{.strong {toupper(info$method)}} schedule: ",
-    "R$ {fmt(info$financiamento)} over {info$n} months at ",
+    "R$ {fmt(info$loan)} over {info$n} months at ",
     "{round(100 * info$i, 2)}% a.a. ({info$rate_type})"
   )
   cli::cli_text(
-    "First payment R$ {fmt(x$parcela[1])} | ",
-    "last R$ {fmt(x$parcela[nrow(x)])} | ",
-    "total interest R$ {fmt(sum(x$juros))}"
+    "First payment R$ {fmt(x$total_payment[1])} | ",
+    "last R$ {fmt(x$total_payment[nrow(x)])} | ",
+    "total interest R$ {fmt(sum(x$interest))}"
   )
   NextMethod()
   invisible(x)

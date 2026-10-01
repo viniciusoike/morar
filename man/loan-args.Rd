@@ -4,21 +4,32 @@
 \alias{loan-args}
 \title{Shared loan arguments}
 \arguments{
-\item{i}{Annual interest rate in decimal form (e.g. \code{0.10}).}
+\item{i}{Annual interest rate in decimal form (e.g. \code{0.10}). Use the
+all-in rate: for SFH loans indexed to TR, add the expected TR to the
+contract spread.}
 
-\item{ltv}{Loan-to-value ratio, in (0, 1]. Default \code{0.7} (30\% down payment).}
+\item{ltv}{Loan-to-value ratio, in (0, 1]. \code{NULL} (default) uses
+\code{\link[=default_ltv]{default_ltv()}} for the chosen \code{method}.}
 
 \item{n}{Loan term in months. Default \code{360} (30 years).}
 
-\item{comp}{Maximum share of income committed to the first payment, in
-(0, 1]. Default \code{0.3}.}
+\item{pti}{Maximum payment-to-income ratio: the share of monthly income
+the first payment may take, in (0, 1]. Default \code{0.3}.}
 
 \item{method}{Amortization method: \code{"sac"} (constant amortization, default),
-\code{"price"} (constant payment) or \code{"misto"} (average of SAC and Price
-payments).}
+\code{"price"} (constant payment) or \code{"mixed"} (average of SAC and Price
+payments, the \emph{Sistema de Amortização Misto}).}
 
 \item{rate_type}{How \code{i} is quoted: \code{"effective"} (default) or \code{"nominal"}.
 See \code{\link[=annual_to_monthly]{annual_to_monthly()}}.}
+
+\item{mip_rate}{Monthly death and disability insurance (MIP) rate, applied
+to the outstanding loan balance. Default \code{0}.}
+
+\item{dfi_rate}{Monthly property damage insurance (DFI) rate, applied to
+the property price. Default \code{0}.}
+
+\item{admin_fee}{Monthly administrative fee in reais. Default \code{0}.}
 }
 \description{
 Shared loan arguments
@@ -26,7 +37,9 @@ Shared loan arguments
 \details{
 Affordability is evaluated at the \strong{first} payment, which is the binding
 one for bank approval: under SAC it is the highest payment of the loan;
-under Price all payments are equal.
+under Price all payments are equal. The first payment includes MIP, DFI and
+the administrative fee. MIP rates depend on the borrower's age, so the
+charges default to zero.
 
 All numeric arguments are vectorized and recycled to a common length
 following tidyverse recycling rules (length 1 or the common length), so the

@@ -4,7 +4,7 @@
 \alias{payment_factor}
 \title{First-payment factor}
 \usage{
-payment_factor(rate_m, n = 360, method = c("sac", "price", "misto"))
+payment_factor(rate_m, n = 360, method = c("sac", "price", "mixed"))
 }
 \arguments{
 \item{rate_m}{Monthly interest rate (decimal).}
@@ -12,15 +12,14 @@ payment_factor(rate_m, n = 360, method = c("sac", "price", "misto"))
 \item{n}{Loan term in months. Default \code{360} (30 years).}
 
 \item{method}{Amortization method: \code{"sac"} (constant amortization, default),
-\code{"price"} (constant payment) or \code{"misto"} (average of SAC and Price
-payments).}
+\code{"price"} (constant payment) or \code{"mixed"} (average of SAC and Price
+payments, the \emph{Sistema de Amortização Misto}).}
 }
 \value{
 Numeric vector.
 }
 \description{
-First monthly payment per unit of debt. This is the single quantity that
-links debt, payment, income and price across all functions in the package:
+First monthly payment, excluding insurance and fees, per unit of debt:
 \code{payment = debt * factor}.
 }
 \examples{

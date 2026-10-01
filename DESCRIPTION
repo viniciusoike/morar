@@ -1,19 +1,20 @@
 Package: morar
 Title: Housing Affordability Analysis for Brazil
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
-    person("Vinicius", "Oike", email = "CHANGE-ME@example.com",
-           role = c("aut", "cre"))
+    person("Vinicius", "Oike", , "viniciusoike@gmail.com", role = c("aut", "cre"))
 Description: Mortgage and housing affordability calculations following
     Brazilian market conventions. Implements SAC, Price and mixed
-    amortization, the inversion between income and maximum financeable
-    price, full amortization schedules, and affordability indices (HAI and
-    price-to-income ratio). All core functions are vectorized so they can be
-    applied to entire income or price distributions.
+    amortization, effective and nominal rates, insurance (MIP and DFI) and
+    administrative fees, the inversion between income and maximum
+    financeable price, full amortization schedules, and affordability
+    indices (HAI and price-to-income ratio). Core functions are vectorized
+    so they apply to entire income or price distributions.
 License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+URL: https://github.com/viniciusoike/morar
+BugReports: https://github.com/viniciusoike/morar/issues
+Depends:
+    R (>= 4.1.0)
 Imports:
     cli,
     rlang,
@@ -22,5 +23,6 @@ Imports:
 Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-URL: https://github.com/viniciusoike/morar
-BugReports: https://github.com/viniciusoike/morar/issues
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3

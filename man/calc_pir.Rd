@@ -4,12 +4,16 @@
 \alias{calc_pir}
 \title{Price-to-income ratio (PIR)}
 \usage{
-calc_pir(p, renda)
+calc_pir(price, income, annual_factor = 12)
 }
 \arguments{
-\item{p}{Property price. Vectorized.}
+\item{price}{Property price. Vectorized.}
 
-\item{renda}{Monthly household income. Vectorized.}
+\item{income}{Monthly household income. Vectorized.}
+
+\item{annual_factor}{Number of monthly incomes in a year. Default \code{12}.
+Use \code{40 / 3} (about 13.33) to include the 13th salary and the vacation
+bonus of formal Brazilian workers.}
 }
 \value{
 Numeric vector.
@@ -18,7 +22,8 @@ Numeric vector.
 Property price divided by \strong{annual} household income.
 }
 \examples{
-calc_pir(p = 500000, renda = 10000)
+calc_pir(price = 500000, income = 10000)
+calc_pir(price = 500000, income = 10000, annual_factor = 40 / 3)
 }
 \seealso{
 \code{\link[=pir_category]{pir_category()}}

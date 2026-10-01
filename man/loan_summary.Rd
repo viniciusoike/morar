@@ -5,38 +5,52 @@
 \title{Loan summary}
 \usage{
 loan_summary(
-  p,
+  price,
   i,
-  ltv = 0.7,
+  ltv = NULL,
   n = 360,
-  comp = 0.3,
-  method = c("sac", "price", "misto"),
-  rate_type = c("effective", "nominal")
+  pti = 0.3,
+  method = c("sac", "price", "mixed"),
+  rate_type = c("effective", "nominal"),
+  mip_rate = 0,
+  dfi_rate = 0,
+  admin_fee = 0
 )
 }
 \arguments{
-\item{p}{Property price. Vectorized.}
+\item{price}{Property price. Vectorized.}
 
-\item{i}{Annual interest rate in decimal form (e.g. \code{0.10}).}
+\item{i}{Annual interest rate in decimal form (e.g. \code{0.10}). Use the
+all-in rate: for SFH loans indexed to TR, add the expected TR to the
+contract spread.}
 
-\item{ltv}{Loan-to-value ratio, in (0, 1]. Default \code{0.7} (30\% down payment).}
+\item{ltv}{Loan-to-value ratio, in (0, 1]. \code{NULL} (default) uses
+\code{\link[=default_ltv]{default_ltv()}} for the chosen \code{method}.}
 
 \item{n}{Loan term in months. Default \code{360} (30 years).}
 
-\item{comp}{Maximum share of income committed to the first payment, in
-(0, 1]. Default \code{0.3}.}
+\item{pti}{Maximum payment-to-income ratio: the share of monthly income
+the first payment may take, in (0, 1]. Default \code{0.3}.}
 
 \item{method}{Amortization method: \code{"sac"} (constant amortization, default),
-\code{"price"} (constant payment) or \code{"misto"} (average of SAC and Price
-payments).}
+\code{"price"} (constant payment) or \code{"mixed"} (average of SAC and Price
+payments, the \emph{Sistema de Amortização Misto}).}
 
 \item{rate_type}{How \code{i} is quoted: \code{"effective"} (default) or \code{"nominal"}.
 See \code{\link[=annual_to_monthly]{annual_to_monthly()}}.}
+
+\item{mip_rate}{Monthly death and disability insurance (MIP) rate, applied
+to the outstanding loan balance. Default \code{0}.}
+
+\item{dfi_rate}{Monthly property damage insurance (DFI) rate, applied to
+the property price. Default \code{0}.}
+
+\item{admin_fee}{Monthly administrative fee in reais. Default \code{0}.}
 }
 \value{
-A tibble with one row per property and columns \code{preco}, \code{entrada}
-(down payment), \code{financiamento} (financed amount), \code{parcela} (first
-payment), \code{renda_minima}, \code{taxa_mensal} and \code{method}.
+A tibble with one row per property and columns \code{price},
+\code{down_payment}, \code{loan}, \code{charges} (first-month insurance and fees),
+\code{first_payment}, \code{min_income}, \code{rate_monthly}, \code{term} and \code{method}.
 }
 \description{
 All affordability components for one or more properties, as a tibble.
