@@ -1,3 +1,11 @@
+# morar (development version)
+
+* Added an optional down-payment cash limit to `max_price()` and `max_loan()`.
+* Clarified that affordability estimates use a fixed-rate, first-payment
+  model and do not determine bank approval or model balance indexation.
+* Rejected non-finite numeric inputs and missing scalar schedule inputs with
+  explicit errors.
+
 # morar 0.2.0
 
 * Renamed `renda_minima()`, `inc_to_price()`, `emprestimo_max()` and

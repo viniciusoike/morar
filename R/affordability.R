@@ -20,11 +20,11 @@
 #' @param admin_fee Monthly administrative fee in reais. Default `0`.
 #'
 #' @details
-#' Affordability is evaluated at the **first** payment, which is the binding
-#' one for bank approval: under SAC it is the highest payment of the loan;
-#' under Price all payments are equal. The first payment includes MIP, DFI and
-#' the administrative fee. MIP rates depend on the borrower's age, so the
-#' charges default to zero.
+#' Affordability is evaluated at the **first** payment, which is the highest
+#' one under SAC. The calculation assumes a fixed monthly interest rate; it
+#' does not model indexation of the outstanding balance or determine bank
+#' approval. The first payment includes MIP, DFI and the administrative fee.
+#' MIP rates depend on the borrower's age, so charges default to zero.
 #'
 #' All numeric arguments are vectorized and recycled to a common length
 #' following tidyverse recycling rules (length 1 or the common length), so the
@@ -36,8 +36,9 @@ NULL
 
 #' Default loan-to-value ratio by amortization method
 #'
-#' Maximum share of the property price that Caixa finances under SBPE in
-#' 2026: 80% for SAC and 70% for Price. The mixed method uses the Price limit.
+#' Caixa SBPE convention checked in September 2026: 80% for SAC and 70% for
+#' Price. The mixed method uses the Price limit. Pass `ltv` explicitly for
+#' another product or lender.
 #'
 #' @inheritParams loan-args
 #'
@@ -172,10 +173,15 @@ min_income <- function(
 #' Maximum financeable property price for a given income
 #'
 #' Inverts [min_income()]: the highest property price whose first payment
-#' fits within `pti` of the given monthly income. Returns `0` when the income
-#' does not cover the administrative fee.
+#' fits within `pti` of the given monthly income. When `cash` is supplied,
+#' the price must also fit the available down payment. The lower limit binds.
+#' The loan-to-value ratio stays fixed; unused cash does not reduce the loan.
+#' Purchase taxes, registration and other upfront costs are not included.
+#' Returns `0` when the income does not cover the administrative fee.
 #'
 #' @param income Monthly household income. Vectorized.
+#' @param cash Cash available for the down payment, in reais. `NULL` (default)
+#'   applies no cash constraint. Vectorized; may be zero.
 #' @inheritParams min_income
 #'
 #' @return Numeric vector of maximum property prices.
@@ -195,12 +201,17 @@ max_price <- function(
   rate_type = c("effective", "nominal"),
   mip_rate = 0,
   dfi_rate = 0,
-  admin_fee = 0
+  admin_fee = 0,
+  cash = NULL
 ) {
   check_positive(income)
   check_unit_interval(pti)
+  if (!is.null(cash)) {
+    check_non_negative(cash)
+  }
   terms <- loan_terms(
     income = income,
+    cash = cash,
     pti = pti,
     i = i,
     ltv = ltv,
@@ -211,13 +222,27 @@ max_price <- function(
     dfi_rate = dfi_rate,
     admin_fee = admin_fee
   )
-  pmax((terms$income * terms$pti - terms$admin_fee) / terms$coef, 0)
+  income_limit <- pmax(
+    (terms$income * terms$pti - terms$admin_fee) / terms$coef,
+    0
+  )
+  if (is.null(cash)) {
+    return(income_limit)
+  }
+
+  cash_limit <- ifelse(
+    terms$ltv == 1 & !is.na(terms$cash),
+    Inf,
+    terms$cash / (1 - terms$ltv)
+  )
+  return(pmin(income_limit, cash_limit))
 }
 
 #' Maximum loan amount for a given income
 #'
 #' The largest debt (financed amount) whose first payment fits within `pti`
-#' of income. Equal to `max_price() * ltv`.
+#' of income and, when `cash` is supplied, whose down payment is affordable.
+#' Equal to `max_price() * ltv`.
 #'
 #' @inheritParams max_price
 #'
@@ -235,7 +260,8 @@ max_loan <- function(
   rate_type = c("effective", "nominal"),
   mip_rate = 0,
   dfi_rate = 0,
-  admin_fee = 0
+  admin_fee = 0,
+  cash = NULL
 ) {
   method <- rlang::arg_match(method)
   ltv <- ltv %||% default_ltv(method)
@@ -249,9 +275,10 @@ max_loan <- function(
     rate_type = rate_type,
     mip_rate = mip_rate,
     dfi_rate = dfi_rate,
-    admin_fee = admin_fee
+    admin_fee = admin_fee,
+    cash = cash
   )
-  price * vctrs::vec_recycle(ltv, length(price))
+  return(price * vctrs::vec_recycle(ltv, length(price)))
 }
 
 #' Loan summary

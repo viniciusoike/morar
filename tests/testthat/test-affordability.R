@@ -97,6 +97,27 @@ test_that("max_price is zero when income does not cover the fixed fee", {
   expect_equal(max_price(50, i = 0.1, pti = 0.3, admin_fee = 25), 0)
 })
 
+test_that("cash caps the affordable price through the down payment", {
+  income_limit <- max_price(10000, i = 0.10, ltv = 0.8)
+  expect_equal(max_price(10000, i = 0.10, ltv = 0.8, cash = 50000), 250000)
+  expect_equal(max_price(10000, i = 0.10, ltv = 0.8, cash = 1e6), income_limit)
+  expect_equal(max_price(10000, i = 0.10, ltv = 0.8, cash = 0), 0)
+  expect_equal(
+    max_price(10000, i = 0.10, ltv = 1, cash = 0),
+    max_price(10000, i = 0.10, ltv = 1)
+  )
+})
+
+test_that("cash recycles with income and propagates missing values", {
+  expect_equal(
+    max_price(10000, i = 0.10, ltv = 0.8, cash = c(50000, 1e6)),
+    c(250000, max_price(10000, i = 0.10, ltv = 0.8))
+  )
+  expect_equal(max_loan(10000, i = 0.10, ltv = 0.8, cash = 50000), 200000)
+  expect_true(is.na(max_price(10000, i = 0.10, ltv = 1, cash = NA)))
+  expect_error(max_price(c(5000, 10000), i = 0.10, cash = 1:3))
+})
+
 test_that("max_loan returns the loan, not the price", {
   expect_equal(
     max_loan(10000, i = 0.10, ltv = 0.6),
@@ -134,6 +155,10 @@ test_that("invalid terms and shares are rejected", {
   expect_error(payment_factor(0.01, n = 0), "whole number")
   expect_error(loan_summary(3e5, i = 0.1, pti = 0), "pti")
   expect_error(loan_summary(3e5, i = 0.1, pti = 2), "pti")
+  expect_error(min_income(Inf, i = 0.1), "price")
+  expect_error(max_price(10000, i = Inf), "rate")
+  expect_error(max_price(10000, i = 0.1, admin_fee = Inf), "admin_fee")
+  expect_error(max_price(10000, i = 0.1, cash = Inf), "cash")
 })
 
 test_that("loan_summary is internally consistent", {

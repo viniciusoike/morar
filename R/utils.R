@@ -31,11 +31,11 @@ check_rate <- function(
   call = rlang::caller_env()
 ) {
   check_numeric(i, arg = arg, call = call)
-  bad <- which(!is.na(i) & i < 0)
+  bad <- which(!is.na(i) & (!is.finite(i) | i < 0))
   if (length(bad) > 0) {
     cli::cli_abort(
       c(
-        "{.arg {arg}} must be a non-negative annual rate in decimal form.",
+        "{.arg {arg}} must be a finite, non-negative annual rate in decimal form.",
         "x" = "Invalid value(s) at position(s) {bad}: {.val {i[bad]}}."
       ),
       call = call
@@ -69,11 +69,11 @@ check_positive <- function(
   call = rlang::caller_env()
 ) {
   check_numeric(x, arg = arg, call = call)
-  bad <- which(!is.na(x) & x <= 0)
+  bad <- which(!is.na(x) & (!is.finite(x) | x <= 0))
   if (length(bad) > 0) {
     cli::cli_abort(
       c(
-        "{.arg {arg}} must be positive.",
+        "{.arg {arg}} must be positive and finite.",
         "x" = "Invalid value(s) at position(s) {bad}: {.val {x[bad]}}."
       ),
       call = call
@@ -88,11 +88,11 @@ check_non_negative <- function(
   call = rlang::caller_env()
 ) {
   check_numeric(x, arg = arg, call = call)
-  bad <- which(!is.na(x) & x < 0)
+  bad <- which(!is.na(x) & (!is.finite(x) | x < 0))
   if (length(bad) > 0) {
     cli::cli_abort(
       c(
-        "{.arg {arg}} must be zero or positive.",
+        "{.arg {arg}} must be zero or positive and finite.",
         "x" = "Invalid value(s) at position(s) {bad}: {.val {x[bad]}}."
       ),
       call = call

@@ -3,13 +3,12 @@ Title: Housing Affordability Analysis for Brazil
 Version: 0.2.0
 Authors@R:
     person("Vinicius", "Oike", , "viniciusoike@gmail.com", role = c("aut", "cre"))
-Description: Mortgage and housing affordability calculations following
-    Brazilian market conventions. Implements SAC, Price and mixed
-    amortization, effective and nominal rates, insurance (MIP and DFI) and
-    administrative fees, the inversion between income and maximum
-    financeable price, full amortization schedules, and affordability
-    indices (HAI and price-to-income ratio). Core functions are vectorized
-    so they apply to entire income or price distributions.
+Description: Fixed-rate mortgage and housing affordability calculations for
+    Brazil. Implements SAC, Price and mixed amortization, effective and
+    nominal rates, insurance (MIP and DFI), administrative fees, income and
+    down-payment limits on property price, full amortization schedules, and
+    affordability indices (HAI and price-to-income ratio). Core functions
+    are vectorized so they apply to income or price distributions.
 License: MIT + file LICENSE
 URL: https://github.com/viniciusoike/morar
 BugReports: https://github.com/viniciusoike/morar/issues

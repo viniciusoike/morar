@@ -34,7 +34,15 @@ amortization_table <- function(
   method <- rlang::arg_match(method)
   rate_type <- rlang::arg_match(rate_type)
   ltv <- ltv %||% default_ltv(method)
-  scalars <- list(price, i, ltv, n, mip_rate, dfi_rate, admin_fee)
+  scalars <- list(
+    price = price,
+    i = i,
+    ltv = ltv,
+    n = n,
+    mip_rate = mip_rate,
+    dfi_rate = dfi_rate,
+    admin_fee = admin_fee
+  )
   if (any(lengths(scalars) != 1)) {
     cli::cli_abort(
       c(
@@ -50,6 +58,10 @@ amortization_table <- function(
   check_non_negative(mip_rate)
   check_non_negative(dfi_rate)
   check_non_negative(admin_fee)
+  missing <- names(scalars)[vapply(scalars, anyNA, logical(1))]
+  if (length(missing) > 0) {
+    cli::cli_abort("{.arg {missing[[1]]}} must not be missing in a schedule.")
+  }
 
   r <- annual_to_monthly(i, rate_type)
   d0 <- price * ltv

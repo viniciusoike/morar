@@ -16,12 +16,13 @@ options(pillar.width = 80)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-morar computes housing affordability under Brazilian mortgage rules. It
-answers two questions: how much income a household needs to buy a given
-property, and how expensive a property a given income can buy. It handles
-SAC, Price and mixed amortization, effective and nominal rates, insurance
-(MIP and DFI) and administrative fees. Every core function is vectorized, so
-it works on whole income or price distributions inside `dplyr::mutate()`.
+morar computes housing affordability for fixed-rate Brazilian mortgage
+scenarios. It answers two questions: how much income a household needs to buy
+a given property, and how expensive a property a given income and down payment
+can support. It handles SAC, Price and mixed amortization, effective and
+nominal rates, insurance (MIP and DFI) and administrative fees. Every core
+function is vectorized, so it works on income or price distributions inside
+`dplyr::mutate()`.
 
 ## Installation
 
@@ -34,8 +35,8 @@ pak::pak("viniciusoike/morar")
 
 `min_income()` returns the monthly income needed to finance a property, and
 `max_price()` inverts it. By default the first payment may take 30% of
-income, and the loan-to-value ratio follows Caixa's SBPE limits for the
-chosen method.
+income. The default loan-to-value ratio uses a Caixa SBPE convention checked
+in September 2026; pass `ltv` for another product or lender.
 
 ```{r}
 library(morar)
@@ -47,9 +48,19 @@ min_income(500000, i = 0.11)
 max_price(c(5000, 10000, 20000), i = 0.11)
 ```
 
-Banks approve credit against the first payment *including* insurance and
-fees. MIP depends on the borrower's age, so the charges default to zero;
-pass your own rates to include them.
+Pass `cash` to cap the price at what the available down payment supports. The
+lower of the income and cash limits binds. `loan_summary()` reports the
+required down payment for a property. The chosen `ltv` stays fixed; extra
+cash does not reduce the modeled loan.
+
+```{r}
+max_price(10000, i = 0.11, ltv = 0.8)
+max_price(10000, i = 0.11, ltv = 0.8, cash = 50000)
+loan_summary(250000, i = 0.11, ltv = 0.8)$down_payment
+```
+
+The first payment includes insurance and fees. MIP depends on the borrower's
+age, so charges default to zero; pass your own rates to include them.
 
 ```{r}
 min_income(
@@ -92,12 +103,16 @@ pir_category(pir)
 
 ## Conventions
 
-- Rates are decimals: `0.11` means 11% a.a. Use the all-in rate; for loans
-  indexed to TR, add the expected TR to the contract spread.
+- Rates are decimals: `0.11` means 11% a.a. The schedule uses a fixed monthly
+  interest rate. It does not model TR or IPCA adjustment of the outstanding
+  balance.
 - `rate_type = "effective"` (default) compounds the annual rate;
   `"nominal"` divides it by 12.
-- Affordability is evaluated at the first payment, the highest one under SAC.
+- Affordability uses the first payment, the highest one under SAC. This is an
+  estimate of qualifying income, not a bank approval decision.
 - `ltv = NULL` uses `default_ltv(method)`: 80% for SAC, 70% for Price and
-  mixed.
+  mixed, under the dated Caixa SBPE convention above.
+- `cash` covers the down payment only. Purchase taxes, registration and other
+  upfront costs are outside the calculation.
 - `calc_pir()` annualizes income with `annual_factor = 12`; use `40 / 3` to
   include the 13th salary and the vacation bonus.

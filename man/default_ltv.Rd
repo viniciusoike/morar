@@ -15,8 +15,9 @@ payments, the \emph{Sistema de Amortização Misto}).}
 A number in (0, 1].
 }
 \description{
-Maximum share of the property price that Caixa finances under SBPE in
-2026: 80\% for SAC and 70\% for Price. The mixed method uses the Price limit.
+Caixa SBPE convention checked in September 2026: 80\% for SAC and 70\% for
+Price. The mixed method uses the Price limit. Pass \code{ltv} explicitly for
+another product or lender.
 }
 \examples{
 default_ltv("sac")
