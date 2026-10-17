@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Mortgage and housing affordability calculations following Brazilian market conventions. Implements SAC, Price and mixed amortization, effective and nominal rates, insurance (MIP and DFI) and administrative fees, the inversion between income and maximum financeable price, full amortization schedules, and affordability indices (HAI and price-to-income ratio). Core functions are vectorized so they apply to entire income or price distributions.
+Fixed-rate mortgage and housing affordability calculations for Brazil. Implements SAC, Price and mixed amortization, effective and nominal rates, insurance (MIP and DFI), administrative fees, income and down-payment limits on property price, full amortization schedules, and affordability indices (HAI and price-to-income ratio). Core functions are vectorized so they apply to income or price distributions.
 }
 \seealso{
 Useful links:

@@ -65,6 +65,11 @@ test_that("amortization_table rejects vector inputs", {
   expect_error(amortization_table(c(1e5, 2e5), i = 0.1), "one schedule")
 })
 
+test_that("amortization_table rejects missing scalar inputs", {
+  expect_error(amortization_table(500000, i = 0.1, n = NA), "missing")
+  expect_error(amortization_table(500000, i = NA), "missing")
+})
+
 test_that("print method works", {
   s <- amortization_table(500000, i = 0.10)
   expect_output(print(s), "period")

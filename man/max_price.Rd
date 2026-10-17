@@ -14,7 +14,8 @@ max_price(
   rate_type = c("effective", "nominal"),
   mip_rate = 0,
   dfi_rate = 0,
-  admin_fee = 0
+  admin_fee = 0,
+  cash = NULL
 )
 }
 \arguments{
@@ -46,14 +47,20 @@ to the outstanding loan balance. Default \code{0}.}
 the property price. Default \code{0}.}
 
 \item{admin_fee}{Monthly administrative fee in reais. Default \code{0}.}
+
+\item{cash}{Cash available for the down payment, in reais. \code{NULL} (default)
+applies no cash constraint. Vectorized; may be zero.}
 }
 \value{
 Numeric vector of maximum property prices.
 }
 \description{
 Inverts \code{\link[=min_income]{min_income()}}: the highest property price whose first payment
-fits within \code{pti} of the given monthly income. Returns \code{0} when the income
-does not cover the administrative fee.
+fits within \code{pti} of the given monthly income. When \code{cash} is supplied,
+the price must also fit the available down payment. The lower limit binds.
+The loan-to-value ratio stays fixed; unused cash does not reduce the loan.
+Purchase taxes, registration and other upfront costs are not included.
+Returns \code{0} when the income does not cover the administrative fee.
 }
 \examples{
 max_price(10000, i = 0.10)

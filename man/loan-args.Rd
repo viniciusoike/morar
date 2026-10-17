@@ -35,11 +35,11 @@ the property price. Default \code{0}.}
 Shared loan arguments
 }
 \details{
-Affordability is evaluated at the \strong{first} payment, which is the binding
-one for bank approval: under SAC it is the highest payment of the loan;
-under Price all payments are equal. The first payment includes MIP, DFI and
-the administrative fee. MIP rates depend on the borrower's age, so the
-charges default to zero.
+Affordability is evaluated at the \strong{first} payment, which is the highest
+one under SAC. The calculation assumes a fixed monthly interest rate; it
+does not model indexation of the outstanding balance or determine bank
+approval. The first payment includes MIP, DFI and the administrative fee.
+MIP rates depend on the borrower's age, so charges default to zero.
 
 All numeric arguments are vectorized and recycled to a common length
 following tidyverse recycling rules (length 1 or the common length), so the

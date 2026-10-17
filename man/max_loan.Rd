@@ -14,7 +14,8 @@ max_loan(
   rate_type = c("effective", "nominal"),
   mip_rate = 0,
   dfi_rate = 0,
-  admin_fee = 0
+  admin_fee = 0,
+  cash = NULL
 )
 }
 \arguments{
@@ -46,13 +47,17 @@ to the outstanding loan balance. Default \code{0}.}
 the property price. Default \code{0}.}
 
 \item{admin_fee}{Monthly administrative fee in reais. Default \code{0}.}
+
+\item{cash}{Cash available for the down payment, in reais. \code{NULL} (default)
+applies no cash constraint. Vectorized; may be zero.}
 }
 \value{
 Numeric vector of maximum loan amounts.
 }
 \description{
 The largest debt (financed amount) whose first payment fits within \code{pti}
-of income. Equal to \code{max_price() * ltv}.
+of income and, when \code{cash} is supplied, whose down payment is affordable.
+Equal to \code{max_price() * ltv}.
 }
 \examples{
 max_loan(10000, i = 0.10)
